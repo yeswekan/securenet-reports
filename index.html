@@ -320,7 +320,14 @@
         // Chart instances
         let weeklyChart, regionChart, statusChart, timeChart, repChart;
         
-        // Colors
+        // Colors - extended palette for more items
+        const colorArray = [
+            '#60a5fa', '#34d399', '#fbbf24', '#a78bfa', '#f472b6', 
+            '#fb923c', '#22d3d8', '#f87171', '#a3e635', '#e879f9',
+            '#38bdf8', '#4ade80', '#facc15', '#c084fc', '#fb7185',
+            '#fdba74', '#2dd4bf', '#fca5a5', '#bef264', '#f0abfc'
+        ];
+        
         const colors = {
             blue: '#60a5fa',
             green: '#34d399',
@@ -332,7 +339,6 @@
             red: '#f87171',
             lime: '#a3e635'
         };
-        const colorArray = [colors.blue, colors.green, colors.yellow, colors.purple, colors.pink, colors.orange, colors.cyan, colors.red];
         
         // Chart.js defaults
         Chart.defaults.color = '#94a3b8';
@@ -394,7 +400,8 @@
             });
             repArray.sort((a, b) => repTotals[b] - repTotals[a]);
             
-            const datasets = repArray.slice(0, 8).map((rep, i) => ({
+            // No limit - show ALL reps in filtered date range
+            const datasets = repArray.map((rep, i) => ({
                 label: rep,
                 data: sortedWeeks.map(week => weeklyData[week]?.[rep] || 0),
                 borderColor: colorArray[i % colorArray.length],
@@ -430,7 +437,8 @@
                 regionCounts[city] = (regionCounts[city] || 0) + 1;
             });
             
-            const sorted = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            // No limit - show ALL regions in filtered date range
+            const sorted = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]);
             const labels = sorted.map(s => s[0]);
             const values = sorted.map(s => s[1]);
             
@@ -442,7 +450,7 @@
                     datasets: [{
                         label: 'Door Knocks',
                         data: values,
-                        backgroundColor: colorArray,
+                        backgroundColor: sorted.map((_, i) => colorArray[i % colorArray.length]),
                         borderRadius: 6
                     }]
                 },
@@ -466,16 +474,18 @@
                 statusCounts[cat] = (statusCounts[cat] || 0) + 1;
             });
             
-            const values = statusOrder.map(s => statusCounts[s]);
+            // Filter out zero values for cleaner chart
+            const filteredStatus = statusOrder.filter(s => statusCounts[s] > 0);
+            const values = filteredStatus.map(s => statusCounts[s]);
             
             if (statusChart) statusChart.destroy();
             statusChart = new Chart(document.getElementById('statusChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: statusOrder,
+                    labels: filteredStatus,
                     datasets: [{
                         data: values,
-                        backgroundColor: [colors.blue, colors.red, colors.yellow, colors.cyan, colors.purple, colors.orange, colors.lime, colors.pink],
+                        backgroundColor: filteredStatus.map((_, i) => colorArray[i % colorArray.length]),
                         borderWidth: 0
                     }]
                 },
@@ -498,13 +508,15 @@
                 }
             });
             
-            const values = timeOrder.map(t => timeCounts[t]);
+            // Filter out zero values
+            const filteredTime = timeOrder.filter(t => timeCounts[t] > 0);
+            const values = filteredTime.map(t => timeCounts[t]);
             
             if (timeChart) timeChart.destroy();
             timeChart = new Chart(document.getElementById('timeChart'), {
                 type: 'bar',
                 data: {
-                    labels: timeOrder,
+                    labels: filteredTime,
                     datasets: [{
                         label: 'Knocks',
                         data: values,
@@ -527,6 +539,7 @@
                 repCounts[d.lead_owner] = (repCounts[d.lead_owner] || 0) + 1;
             });
             
+            // No limit - show ALL reps in filtered date range
             const sorted = Object.entries(repCounts).sort((a, b) => b[1] - a[1]);
             const labels = sorted.map(s => s[0]);
             const values = sorted.map(s => s[1]);
@@ -568,6 +581,7 @@
                 }
             });
             
+            // No limit - show ALL reps in filtered date range
             const sorted = Object.entries(repStats).sort((a, b) => b[1].knocks - a[1].knocks);
             const maxKnocks = sorted.length > 0 ? sorted[0][1].knocks : 1;
             
