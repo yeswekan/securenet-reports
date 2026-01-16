@@ -265,6 +265,13 @@
             </div>
         </div>
 
+        <div class="chart-container full-width">
+            <h3 class="chart-title">📅 Daily Door Knocks by Sales Rep</h3>
+            <div class="chart-wrapper tall">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+
         <div class="chart-container">
             <h3 class="chart-title">📍 Door Knocks by Region</h3>
             <div class="chart-wrapper">
@@ -318,7 +325,7 @@
         const maxDate = "2026-01-15";
         
         // Chart instances
-        let weeklyChart, regionChart, statusChart, timeChart, repChart;
+        let weeklyChart, dailyChart, regionChart, statusChart, timeChart, repChart;
         
         // Colors - extended palette for more items
         const colorArray = [
@@ -371,6 +378,7 @@
             
             // Update all charts
             updateWeeklyChart(data);
+            updateDailyChart(data);
             updateRegionChart(data);
             updateStatusChart(data);
             updateTimeChart(data);
@@ -417,6 +425,58 @@
             
             if (weeklyChart) weeklyChart.destroy();
             weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Door Knocks' } }
+                    }
+                }
+            });
+        }
+        
+        function updateDailyChart(data) {
+            const dailyData = {};
+            const reps = new Set();
+            const days = new Set();
+            
+            data.forEach(d => {
+                if (!dailyData[d.date]) dailyData[d.date] = {};
+                if (!dailyData[d.date][d.lead_owner]) dailyData[d.date][d.lead_owner] = 0;
+                dailyData[d.date][d.lead_owner]++;
+                reps.add(d.lead_owner);
+                days.add(d.date);
+            });
+            
+            const sortedDays = [...days].sort();
+            const repArray = [...reps];
+            
+            const repTotals = {};
+            repArray.forEach(rep => {
+                repTotals[rep] = data.filter(d => d.lead_owner === rep).length;
+            });
+            repArray.sort((a, b) => repTotals[b] - repTotals[a]);
+            
+            // Show ALL reps in filtered date range
+            const datasets = repArray.map((rep, i) => ({
+                label: rep,
+                data: sortedDays.map(day => dailyData[day]?.[rep] || 0),
+                borderColor: colorArray[i % colorArray.length],
+                backgroundColor: colorArray[i % colorArray.length] + '33',
+                tension: 0.3,
+                fill: false
+            }));
+            
+            const labels = sortedDays.map(d => {
+                const date = new Date(d + 'T00:00:00');
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            if (dailyChart) dailyChart.destroy();
+            dailyChart = new Chart(document.getElementById('dailyChart'), {
                 type: 'line',
                 data: { labels, datasets },
                 options: {
