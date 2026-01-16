@@ -430,9 +430,25 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
+                    plugins: { 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            filter: function(tooltipItem) {
+                                return tooltipItem.raw > 0;
+                            },
+                            itemSort: function(a, b) {
+                                return b.raw - a.raw;
+                            }
+                        }
+                    },
                     scales: {
                         y: { beginAtZero: true, title: { display: true, text: 'Door Knocks' } }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
                     }
                 }
             });
@@ -482,9 +498,25 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
+                    plugins: { 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            filter: function(tooltipItem) {
+                                return tooltipItem.raw > 0;
+                            },
+                            itemSort: function(a, b) {
+                                return b.raw - a.raw;
+                            }
+                        }
+                    },
                     scales: {
                         y: { beginAtZero: true, title: { display: true, text: 'Door Knocks' } }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
                     }
                 }
             });
