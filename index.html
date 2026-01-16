@@ -295,8 +295,6 @@
         <button class="quick-filter-btn" onclick="setQuickFilter('thisWeek')">This Week to Date</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('thisMonth')">This Month to Date</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('thisYear')">This Year to Date</button>
-        <button class="quick-filter-btn active" onclick="setQuickFilter('allDTD')">All DTD</button>
-        <button class="quick-filter-btn" onclick="setQuickFilter('currentDTD')">Current DTD</button>
     </div>
     
     <div class="filter-bar" style="gap: 10px; flex-wrap: wrap;">
@@ -1328,9 +1326,8 @@
             selectedReps.add('all');
             document.querySelectorAll('.rep-filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.rep-filter-btn').classList.add('active');
-            // Clear quick filter active states and set All DTD
+            // Clear quick filter active states
             document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.quick-filter-btn[onclick*="allDTD"]').classList.add('active');
             updateDashboard(knocksData, salesData, minDate, maxDate);
         }
         
