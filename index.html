@@ -284,7 +284,7 @@
             <label for="endDate">To:</label>
             <input type="date" id="endDate" value="2026-01-17">
         </div>
-        <button class="filter-btn" onclick="applyFilter()">Apply Filter</button>
+        <button class="filter-btn" onclick="applyManualFilter()">Apply Filter</button>
         <button class="reset-btn" onclick="resetFilter()">Reset</button>
     </div>
     
@@ -550,6 +550,10 @@
         // Selected reps tracking
         let selectedReps = new Set(['all']);
         const allRepNames = ["Caleb Luzier", "Customer Service Team", "Holly Price", "Jared Holmes", "Ken Hall", "Marc William", "Patti Shinn", "Randall Fridley", "SecureNet Office Team", "SecureNet Sales Team", "Will Charles", "William Joseph"];
+        const dtdReps = ["Holly Price", "Ken Hall", "Marc William", "Patti Shinn", "Randall Fridley", "Will Charles"];  // DTD reps for goal calculation
+        
+        // Track current quick filter for goal calculation
+        let currentQuickFilter = null;
         
         // Toggle rep filter button
         function toggleRepFilter(btn, rep) {
@@ -593,10 +597,22 @@
             return Array.from(selectedReps);
         }
         
+        // Get list of DTD reps for goal calculation (only active DTD reps count toward goals)
+        function getGoalRepsList() {
+            if (selectedReps.has('all')) {
+                return dtdReps;
+            }
+            // Only return selected reps that are in the DTD reps list
+            return Array.from(selectedReps).filter(rep => dtdReps.includes(rep));
+        }
+        
         // Quick filter functions
         function setQuickFilter(preset) {
             const today = new Date();
             let startDate, endDate;
+            
+            // Track current quick filter for goal calculation
+            currentQuickFilter = preset;
             
             // Clear active state from all date buttons
             document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
@@ -1279,15 +1295,42 @@
             const monthlySales = {};
             
             // Calculate dynamic goal: 50 per rep, except Ken Hall = 10
-            const selectedRepsList = getSelectedRepsList();
+            // Only count active DTD reps toward the goal
+            const goalRepsList = getGoalRepsList();
             let salesGoal = 0;
-            selectedRepsList.forEach(rep => {
+            goalRepsList.forEach(rep => {
                 if (rep === 'Ken Hall') {
                     salesGoal += 10;
                 } else {
                     salesGoal += 50;
                 }
             });
+            
+            // Adjust goal based on time period
+            if (currentQuickFilter === 'thisWeek') {
+                // Weekly: divide by 4
+                salesGoal = Math.round(salesGoal / 4);
+            } else if (currentQuickFilter === 'today' || currentQuickFilter === 'yesterday') {
+                // Daily: divide by 30
+                salesGoal = Math.round(salesGoal / 30);
+            } else if (currentQuickFilter === 'thisMonth' || currentQuickFilter === 'thisYear' || currentQuickFilter === 'allDTD' || currentQuickFilter === 'currentDTD') {
+                // Monthly/yearly views: keep full monthly goal
+                // salesGoal stays the same
+            } else {
+                // Custom date range or initial load
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                // If it's the full date range (initial load), keep monthly goal
+                if (startDate === minDate && endDate === maxDate) {
+                    // Full date range: keep monthly goal
+                } else if (startDate && endDate) {
+                    // Custom date range: goal / 30 * number of days
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+                    salesGoal = Math.round((salesGoal / 30) * daysDiff);
+                }
+            }
             
             validSales.forEach(d => {
                 if (d.month) {
@@ -1696,6 +1739,13 @@
             updateDashboard(filteredKnocks, filteredSales, startDate, endDate);
         }
         
+        function applyManualFilter() {
+            // Clear quick filter state when manually applying dates
+            currentQuickFilter = null;
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
+            applyFilter();
+        }
+        
         function resetFilter() {
             document.getElementById('startDate').value = minDate;
             document.getElementById('endDate').value = maxDate;
@@ -1704,7 +1754,8 @@
             selectedReps.add('all');
             document.querySelectorAll('.rep-filter-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.rep-filter-btn').classList.add('active');
-            // Clear quick filter active states
+            // Clear quick filter active states and reset tracker
+            currentQuickFilter = null;
             document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
             updateDashboard(knocksData, salesData, minDate, maxDate);
         }
