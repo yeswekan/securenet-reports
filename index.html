@@ -1339,14 +1339,21 @@
             });
             
             const sortedMonths = Object.keys(monthlySales).sort();
-            const values = sortedMonths.map(m => monthlySales[m]);
-            const goalLine = sortedMonths.map(() => salesGoal);
+            let values = sortedMonths.map(m => monthlySales[m]);
+            let goalLine = sortedMonths.map(() => salesGoal);
             
-            const labels = sortedMonths.map(m => {
+            let labels = sortedMonths.map(m => {
                 const [year, month] = m.split('-');
                 const date = new Date(year, parseInt(month) - 1, 1);
                 return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
             });
+            
+            // If only one data point, add padding to make goal line visible
+            if (labels.length === 1) {
+                labels = ['', labels[0], ''];
+                values = [null, values[0], null];
+                goalLine = [salesGoal, salesGoal, salesGoal];
+            }
             
             if (monthlySalesGoalChart) monthlySalesGoalChart.destroy();
             monthlySalesGoalChart = new Chart(document.getElementById('monthlySalesGoalChart'), {
@@ -1357,7 +1364,7 @@
                         {
                             label: 'Monthly Sales',
                             data: values,
-                            backgroundColor: values.map(v => v >= salesGoal ? colors.green : colors.blue),
+                            backgroundColor: values.map(v => v === null ? 'transparent' : (v >= salesGoal ? colors.green : colors.blue)),
                             borderRadius: 6,
                             order: 2
                         },
