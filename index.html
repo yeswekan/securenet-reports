@@ -286,7 +286,9 @@
         <button class="quick-filter-btn" onclick="setQuickFilter('today')">Today</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('yesterday')">Yesterday</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('thisWeek')">This Week to Date</button>
+        <button class="quick-filter-btn" onclick="setQuickFilter('lastWeek')">Last Week</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('thisMonth')">This Month to Date</button>
+        <button class="quick-filter-btn" onclick="setQuickFilter('lastMonth')">Last Month</button>
         <button class="quick-filter-btn" onclick="setQuickFilter('thisYear')">This Year to Date</button>
     </div>
     
@@ -553,6 +555,7 @@
         // Selected reps tracking
         let selectedReps = new Set(['all']);
         const allRepNames = ["Caleb Luzier", "Customer Service Team", "Holly Price", "Jared Holmes", "Ken Hall", "Marc William", "Patti Shinn", "Randall Fridley", "SecureNet Office Team", "SecureNet Sales Team", "Will Charles", "William Joseph"];
+        const dtdRepNames = ["Holly Price", "Ken Hall", "Marc William", "Patti Shinn", "Randall Fridley", "Will Charles"];
         
         // Toggle rep filter button
         function toggleRepFilter(btn, rep) {
@@ -622,10 +625,26 @@
                     startDate = formatDateForInput(sunday);
                     endDate = formatDateForInput(today);
                     break;
+                case 'lastWeek':
+                    // Last week Sunday to Saturday
+                    const lastWeekDay = today.getDay();
+                    const lastSunday = new Date(today);
+                    lastSunday.setDate(today.getDate() - lastWeekDay - 7);
+                    const lastSaturday = new Date(lastSunday);
+                    lastSaturday.setDate(lastSunday.getDate() + 6);
+                    startDate = formatDateForInput(lastSunday);
+                    endDate = formatDateForInput(lastSaturday);
+                    break;
                 case 'thisMonth':
                     const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                     startDate = formatDateForInput(firstOfMonth);
                     endDate = formatDateForInput(today);
+                    break;
+                case 'lastMonth':
+                    const firstOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    const lastOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                    startDate = formatDateForInput(firstOfLastMonth);
+                    endDate = formatDateForInput(lastOfLastMonth);
                     break;
                 case 'thisYear':
                     const firstOfYear = new Date(today.getFullYear(), 0, 1);
@@ -776,7 +795,7 @@
             updateSalesByRegionChart(sales);
             updateSalesByProductChart(sales);
             updateDailySalesChart(sales);
-            updateMonthlySalesGoalChart(sales);
+            updateMonthlySalesGoalChart(sales, startDate, endDate);
             updateInternetBySpeedChart(sales);
             updateColdLeadRecoveryChart(sales);
             updateColdLeadRecoveryTotalsChart(sales);
@@ -1284,22 +1303,35 @@
             });
         }
         
-        function updateMonthlySalesGoalChart(sales) {
+        function updateMonthlySalesGoalChart(sales, startDate, endDate) {
             const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const monthlySales = {};
             
             // Calculate dynamic goal: 50 per rep, except Ken Hall = 10
+            // Only count DTD reps (not system accounts or legacy reps)
             const selectedRepsList = getSelectedRepsList();
-            let salesGoal = 0;
-            selectedRepsList.forEach(rep => {
+            const repsForGoal = selectedReps.has('all') 
+                ? dtdRepNames 
+                : selectedRepsList.filter(rep => dtdRepNames.includes(rep));
+            
+            let monthlyGoal = 0;
+            repsForGoal.forEach(rep => {
                 if (rep === 'Ken Hall') {
-                    salesGoal += 10;
+                    monthlyGoal += 10;
                 } else {
-                    salesGoal += 50;
+                    monthlyGoal += 50;
                 }
             });
+            
+            // Calculate number of days in selected range
+            const start = new Date(startDate + 'T00:00:00');
+            const end = new Date(endDate + 'T00:00:00');
+            const daysDiff = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            // Prorate goal based on days selected (monthly goal / 30 * days)
+            const salesGoal = Math.round((monthlyGoal / 30) * daysDiff);
             
             validSales.forEach(d => {
                 if (d.month) {
@@ -1309,7 +1341,6 @@
             
             const sortedMonths = Object.keys(monthlySales).sort();
             const values = sortedMonths.map(m => monthlySales[m]);
-            const goalLine = sortedMonths.map(() => salesGoal);
             
             const labels = sortedMonths.map(m => {
                 const [year, month] = m.split('-');
@@ -1317,16 +1348,29 @@
                 return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
             });
             
+            // Add padding for goal line visibility when single data point
+            let chartLabels, chartValues, goalLine;
+            if (sortedMonths.length === 1) {
+                // Pad with empty labels on both sides for line to render
+                chartLabels = ['', labels[0], ''];
+                chartValues = [null, values[0], null];
+                goalLine = [salesGoal, salesGoal, salesGoal];
+            } else {
+                chartLabels = labels;
+                chartValues = values;
+                goalLine = sortedMonths.map(() => salesGoal);
+            }
+            
             if (monthlySalesGoalChart) monthlySalesGoalChart.destroy();
             monthlySalesGoalChart = new Chart(document.getElementById('monthlySalesGoalChart'), {
                 type: 'bar',
                 data: {
-                    labels,
+                    labels: chartLabels,
                     datasets: [
                         {
                             label: 'Monthly Sales',
-                            data: values,
-                            backgroundColor: values.map(v => v >= salesGoal ? colors.green : colors.blue),
+                            data: chartValues,
+                            backgroundColor: chartValues.map(v => v !== null && v >= salesGoal ? colors.green : colors.blue),
                             borderRadius: 6,
                             order: 2
                         },
