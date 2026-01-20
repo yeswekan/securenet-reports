@@ -192,6 +192,18 @@
         .chart-container.full-width {
             grid-column: 1 / -1;
         }
+        .clr-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 30px;
+            grid-column: 1 / -1;
+        }
+        .clr-main {
+            flex: 2;
+        }
+        .clr-totals {
+            flex: 1;
+        }
         .chart-title {
             font-size: 1.2rem;
             color: #fff;
@@ -246,6 +258,7 @@
             .chart-grid { grid-template-columns: 1fr; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
             .filter-bar { flex-direction: column; }
+            .clr-row { flex-direction: column; }
         }
     </style>
 </head>
@@ -382,7 +395,7 @@
         </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(251, 146, 60, 0.05));">
             <div class="kpi-value" style="color: #fb923c;" id="kpiColdLeadRecovery">0</div>
-            <div class="kpi-label">Cold Lead Recovery</div>
+            <div class="kpi-label">Cold Lead Recovery Activity</div>
         </div>
         <div class="kpi-card">
             <div class="kpi-value" id="kpiInternet">0</div>
@@ -452,10 +465,20 @@
             </div>
         </div>
 
-        <div class="chart-container full-width">
-            <h3 class="chart-title">Cold Lead Recovery by Rep</h3>
-            <div class="chart-wrapper">
-                <canvas id="coldLeadRecoveryChart"></canvas>
+        <div class="clr-row">
+            <div class="chart-container clr-main">
+                <h3 class="chart-title">Cold Lead Recovery by Rep</h3>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin-top: -15px; margin-bottom: 15px;">Note: These recovered leads are NOT included in the "Total Sales by Rep" count.</p>
+                <div class="chart-wrapper">
+                    <canvas id="coldLeadRecoveryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container clr-totals">
+                <h3 class="chart-title">Cold Lead Recovery Totals</h3>
+                <div class="chart-wrapper">
+                    <canvas id="coldLeadRecoveryTotalsChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -628,13 +651,16 @@
         }
         
         function formatDateForInput(date) {
-            return date.toISOString().split('T')[0];
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         
         // Chart instances
         let weeklyChart, dailyChart, regionChart, statusChart, timeChart, repChart;
         let salesByRepChart, salesByRegionChart, salesByProductChart, dailySalesChart;
-        let monthlySalesGoalChart, internetBySpeedChart, conversionRateChart, coldLeadRecoveryChart;
+        let monthlySalesGoalChart, internetBySpeedChart, conversionRateChart, coldLeadRecoveryChart, coldLeadRecoveryTotalsChart;
         let mobileEssentialsChart, mobileUnlimitedChart, managedServicesChart, managedBackupChart;
         
         // Colors - extended palette
@@ -753,6 +779,7 @@
             updateMonthlySalesGoalChart(sales);
             updateInternetBySpeedChart(sales);
             updateColdLeadRecoveryChart(sales);
+            updateColdLeadRecoveryTotalsChart(sales);
             
             // Mobile and Managed Services charts
             updateMobileEssentialsChart(sales);
@@ -1457,6 +1484,54 @@
                     scales: { 
                         x: { stacked: false },
                         y: { beginAtZero: true, title: { display: true, text: 'Count' } }
+                    }
+                }
+            });
+        }
+        
+        function updateColdLeadRecoveryTotalsChart(sales) {
+            // Calculate totals for Not Saved and Successful
+            let totalNotSaved = 0;
+            let totalSuccessful = 0;
+            
+            sales.forEach(d => {
+                const status = d.Status;
+                
+                // Direct status-based counting
+                if (status === 'Cold Lead Recovery - Not Saved') {
+                    totalNotSaved++;
+                } else if (status === 'Cold Lead Recovery - Successful') {
+                    totalSuccessful++;
+                }
+                // Sonar Entry Completed with Cold Lead Recovery = Yes
+                else if (status === 'Sonar Entry Completed' && d.cold_lead_recovery === 'Yes') {
+                    if (d.saved === 'Yes') {
+                        totalSuccessful++;
+                    } else if (d.saved === 'No') {
+                        totalNotSaved++;
+                    }
+                }
+            });
+            
+            if (coldLeadRecoveryTotalsChart) coldLeadRecoveryTotalsChart.destroy();
+            coldLeadRecoveryTotalsChart = new Chart(document.getElementById('coldLeadRecoveryTotalsChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Not Saved', 'Successful'],
+                    datasets: [{
+                        label: 'Total',
+                        data: [totalNotSaved, totalSuccessful],
+                        backgroundColor: [colors.red, colors.green],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { beginAtZero: true, title: { display: true, text: 'Count' } }
                     }
                 }
             });
