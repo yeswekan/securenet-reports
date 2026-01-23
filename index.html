@@ -342,10 +342,6 @@
             <div class="kpi-value" id="kpiTotalKnocks">0</div>
             <div class="kpi-label">Total Door Knocks</div>
         </div>
-        <div class="kpi-card success">
-            <div class="kpi-value" id="kpiL2U">0</div>
-            <div class="kpi-label">L2U Conversions</div>
-        </div>
         <div class="kpi-card warning">
             <div class="kpi-value" id="kpiPitches">0</div>
             <div class="kpi-label">Full Pitches</div>
@@ -790,7 +786,6 @@
             const activeReps = [...new Set(knocks.map(d => d.lead_owner))].length;
             
             document.getElementById('kpiTotalKnocks').textContent = totalKnocks.toLocaleString();
-            document.getElementById('kpiL2U').textContent = l2uConversions;
             document.getElementById('kpiPitches').textContent = fullPitches;
             document.getElementById('kpiReps').textContent = activeReps;
             
