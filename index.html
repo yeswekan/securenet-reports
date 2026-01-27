@@ -469,13 +469,17 @@
             <div class="kpi-value" id="kpiTotalSales">0</div>
             <div class="kpi-label">Total Sales</div>
         </div>
+        <div class="kpi-card">
+            <div class="kpi-value" id="kpiDTDSales">0</div>
+            <div class="kpi-label">DTD Sales</div>
+        </div>
+        <div class="kpi-card" style="background: linear-gradient(135deg, rgba(34, 211, 216, 0.2), rgba(34, 211, 216, 0.05));">
+            <div class="kpi-value" style="color: #22d3d8;" id="kpiWebSales">0</div>
+            <div class="kpi-label">Web Sales</div>
+        </div>
         <div class="kpi-card" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(251, 146, 60, 0.05));">
             <div class="kpi-value" style="color: #fb923c;" id="kpiColdLeadRecovery">0</div>
             <div class="kpi-label">Cold Lead Recovery</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-value" id="kpiInternet">0</div>
-            <div class="kpi-label">Internet Service</div>
         </div>
         <div class="kpi-card pink">
             <div class="kpi-value" id="kpiFiberProtect">0</div>
@@ -484,10 +488,6 @@
         <div class="kpi-card cyan">
             <div class="kpi-value" id="kpiMesh">0</div>
             <div class="kpi-label">Wireless Mesh</div>
-        </div>
-        <div class="kpi-card" style="background: linear-gradient(135deg, rgba(34, 211, 216, 0.2), rgba(34, 211, 216, 0.05));">
-            <div class="kpi-value" style="color: #22d3d8;" id="kpiWebSales">0</div>
-            <div class="kpi-label">Web Sales</div>
         </div>
     </div>
 
@@ -851,8 +851,8 @@
             document.getElementById('kpiPitches').textContent = fullPitches;
             document.getElementById('kpiReps').textContent = activeReps;
             
-            // Sales KPIs - only count "New Lead", "Sonar Entry Completed", "Reviewed Lead" as sales
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            // Sales KPIs - count "Cold Lead Recovery - Successful", "Sonar Entry Completed", "New Lead" as DTD sales
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             const dtdSalesCount = validSales.length;
             
@@ -868,7 +868,6 @@
                 d.Status === 'Cold Lead Recovery - Not Saved' ||
                 (d.Status === 'Sonar Entry Completed' && d.cold_lead_recovery === 'Yes')
             ).length;
-            const internetSales = validSales.filter(d => d.has_internet).length;
             const fiberProtect = validSales.filter(d => d.has_fiber_protect).length;
             const meshSales = validSales.filter(d => d.has_mesh).length;
             
@@ -882,7 +881,7 @@
             
             document.getElementById('kpiTotalSales').textContent = totalSales.toLocaleString();
             document.getElementById('kpiColdLeadRecovery').textContent = coldLeadRecoveryCount;
-            document.getElementById('kpiInternet').textContent = internetSales;
+            document.getElementById('kpiDTDSales').textContent = dtdSalesCount;
             document.getElementById('kpiFiberProtect').textContent = fiberProtect;
             document.getElementById('kpiMesh').textContent = meshSales;
             document.getElementById('kpiWebSales').textContent = webSales;
@@ -1229,7 +1228,7 @@
         // ========== SALES CHARTS ==========
         
         function updateConversionRateChart(knocks, sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             // Get knocks by rep
@@ -1318,7 +1317,7 @@
         }
         
         function updateSalesByRepChart(sales, web) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             const completedWeb = web.filter(d => d.is_completed);
             
@@ -1366,7 +1365,7 @@
         }
         
         function updateSalesByRegionChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const salesByRegion = {};
@@ -1402,7 +1401,7 @@
         }
         
         function updateSalesByProductChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             // Count total porting numbers for Voice Service
@@ -1437,7 +1436,7 @@
         }
         
         function updateMonthlySalesGoalChart(sales, web) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             const completedWeb = web.filter(d => d.is_completed);
             
@@ -1544,7 +1543,7 @@
         }
         
         function updateInternetBySpeedChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const speedCounts = {};
@@ -1700,7 +1699,7 @@
         }
         
         function updateWeekdayWeekendConversionChart(knocks, sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             // Categorize knocks by weekday vs weekend based on actual date
@@ -1873,7 +1872,7 @@
         }
         
         function updateDailySalesChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const dailySales = {};
@@ -1913,7 +1912,7 @@
         }
         
         function updateMobileEssentialsChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const repCounts = {};
@@ -1956,7 +1955,7 @@
         }
         
         function updateMobileUnlimitedChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const repCounts = {};
@@ -1999,7 +1998,7 @@
         }
         
         function updateManagedServicesChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const repCounts = {};
@@ -2042,7 +2041,7 @@
         }
         
         function updateManagedBackupChart(sales) {
-            const saleStatuses = ['New Lead', 'Sonar Entry Completed', 'Reviewed Lead'];
+            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
             const validSales = sales.filter(d => saleStatuses.includes(d.Status));
             
             const repCounts = {};
