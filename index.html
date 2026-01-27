@@ -1477,7 +1477,6 @@
             
             const sortedMonths = Object.keys(monthlySales).sort();
             const values = sortedMonths.map(m => monthlySales[m]);
-            const goalLine = sortedMonths.map(() => salesGoal);
             
             const labels = sortedMonths.map(m => {
                 const [year, month] = m.split('-');
@@ -1485,15 +1484,29 @@
                 return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
             });
             
+            // For single data point, add phantom labels to make line visible
+            let chartLabels = labels;
+            let chartValues = values;
+            let goalLine;
+            
+            if (labels.length === 1) {
+                // Add empty labels before and after to extend the goal line
+                chartLabels = ['', labels[0], ''];
+                chartValues = [null, values[0], null];
+                goalLine = [salesGoal, salesGoal, salesGoal];
+            } else {
+                goalLine = sortedMonths.map(() => salesGoal);
+            }
+            
             if (monthlySalesGoalChart) monthlySalesGoalChart.destroy();
             monthlySalesGoalChart = new Chart(document.getElementById('monthlySalesGoalChart'), {
                 type: 'bar',
                 data: {
-                    labels,
+                    labels: chartLabels,
                     datasets: [
                         {
                             label: 'Monthly Sales',
-                            data: values,
+                            data: chartValues,
                             backgroundColor: values.map(v => v >= salesGoal ? colors.green : colors.blue),
                             borderRadius: 6,
                             order: 2
@@ -1507,7 +1520,8 @@
                             borderDash: [5, 5],
                             pointRadius: 0,
                             fill: false,
-                            order: 1
+                            order: 1,
+                            spanGaps: true
                         }
                     ]
                 },
