@@ -831,6 +831,20 @@
             );
         }
         
+        // Helper function to filter valid sales
+        // Excludes "Sonar Entry Completed" records where Cold Lead Recovery=Yes AND Saved=No
+        const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
+        function getValidSales(sales) {
+            return sales.filter(d => {
+                if (!saleStatuses.includes(d.Status)) return false;
+                // Exclude Sonar Entry Completed with Cold Lead Recovery=Yes and Saved=No
+                if (d.Status === 'Sonar Entry Completed' && d.cold_lead_recovery === 'Yes' && d.saved === 'No') {
+                    return false;
+                }
+                return true;
+            });
+        }
+        
         function formatDate(dateStr) {
             const d = new Date(dateStr + 'T00:00:00');
             return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -851,9 +865,8 @@
             document.getElementById('kpiPitches').textContent = fullPitches;
             document.getElementById('kpiReps').textContent = activeReps;
             
-            // Sales KPIs - count "Cold Lead Recovery - Successful", "Sonar Entry Completed", "New Lead" as DTD sales
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            // Sales KPIs - excludes Sonar Entry Completed with Cold Lead Recovery=Yes and Saved=No
+            const validSales = getValidSales(sales);
             const dtdSalesCount = validSales.length;
             
             // Web Sales KPI (completed web signups)
@@ -1228,8 +1241,7 @@
         // ========== SALES CHARTS ==========
         
         function updateConversionRateChart(knocks, sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             // Get knocks by rep
             const knocksByRep = {};
@@ -1317,8 +1329,7 @@
         }
         
         function updateSalesByRepChart(sales, web) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             const completedWeb = web.filter(d => d.is_completed);
             
             const salesByRep = {};
@@ -1365,8 +1376,7 @@
         }
         
         function updateSalesByRegionChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const salesByRegion = {};
             validSales.forEach(d => {
@@ -1401,8 +1411,7 @@
         }
         
         function updateSalesByProductChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             // Count total porting numbers for Voice Service
             const voiceQty = validSales.reduce((sum, d) => sum + (d.voice_qty || 0), 0);
@@ -1436,8 +1445,7 @@
         }
         
         function updateMonthlySalesGoalChart(sales, web) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             const completedWeb = web.filter(d => d.is_completed);
             
             const monthlySales = {};
@@ -1557,8 +1565,7 @@
         }
         
         function updateInternetBySpeedChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const speedCounts = {};
             const speedOrder = ['8.5 GIG', '5 GIG', '2 GIG', '1 GIG', '500M', '100M'];
@@ -1713,8 +1720,7 @@
         }
         
         function updateWeekdayWeekendConversionChart(knocks, sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             // Categorize knocks by weekday vs weekend based on actual date
             const weekdayKnocks = knocks.filter(d => {
@@ -1886,8 +1892,7 @@
         }
         
         function updateDailySalesChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const dailySales = {};
             validSales.forEach(d => {
@@ -1926,8 +1931,7 @@
         }
         
         function updateMobileEssentialsChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const repCounts = {};
             validSales.forEach(d => {
@@ -1969,8 +1973,7 @@
         }
         
         function updateMobileUnlimitedChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const repCounts = {};
             validSales.forEach(d => {
@@ -2012,8 +2015,7 @@
         }
         
         function updateManagedServicesChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const repCounts = {};
             validSales.forEach(d => {
@@ -2055,8 +2057,7 @@
         }
         
         function updateManagedBackupChart(sales) {
-            const saleStatuses = ['Cold Lead Recovery - Successful', 'Sonar Entry Completed', 'New Lead'];
-            const validSales = sales.filter(d => saleStatuses.includes(d.Status));
+            const validSales = getValidSales(sales);
             
             const repCounts = {};
             validSales.forEach(d => {
